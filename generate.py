@@ -18,6 +18,16 @@ con_dim = 2    # total continuous factor
 rand_dim = 38  # total random latent dimension
 
 
+def make_grid(tensor, ncols=10):
+    nb_images = tensor.shape[0]
+    tensor = np.pad(tensor, pad_width=[(0,np.mod(nb_images, ncols))]+[(0,0)]*2,
+            mode='constant', constant_values=0)
+    def make_col(images):
+        nb_images = images.shape[0]
+        return np.squeeze(np.concatenate(np.split(images, nb_images, axis=0), axis=1))
+    return np.concatenate([make_col(r) for r in np.split(tensor, ncols)], axis=-1)
+
+
 #
 # create generator & discriminator function
 #
@@ -76,6 +86,10 @@ def run_generator(num, x1, x2, fig_name='sample.png'):
         imgs = sess.run(gen, {target_num: num,
                               target_cval_1: x1,
                               target_cval_2: x2})
+        im_grid = make_grid(imgs * 255.0).astype(np.uint8)
+        from PIL import Image
+        Image.fromarray(im_grid).save('test.png')
+        return
 
         # plot result
         _, ax = plt.subplots(10, 10, sharex=True, sharey=True)
